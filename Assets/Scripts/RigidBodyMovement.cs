@@ -10,6 +10,7 @@ public class RigidBodyMovement : MonoBehaviour
 
     [SerializeField] private float _speed = 5;
     [SerializeField] private float _rotationSpeed = 10;
+    [SerializeField] private float _maxFallSpeed = 10;
     [Header("Jump")]
     [SerializeField] private bool _useDoubleJump;
     [SerializeField] private float _jumpForce = 5;
@@ -17,7 +18,7 @@ public class RigidBodyMovement : MonoBehaviour
     [SerializeField] private float _jumpBufferTime = 0.2f;
     [SerializeField] private ParticleSystem _jumpParticleSystem;
     [Header("Slope check")]
-    [SerializeField] private float _maxSlopeAngle = 60;
+    [SerializeField, Range(0, 89)] private float _maxSlopeAngle = 60;
     [SerializeField] private Vector3 _slopeCheckerOffset;
     [SerializeField] private float _slopeCheckerLength = 0.51f;
     [Header("Ground check")]
@@ -25,8 +26,9 @@ public class RigidBodyMovement : MonoBehaviour
     [SerializeField] private Vector3 _boxOffset = new Vector3(0, -0.7f, 0);
     [SerializeField] private Vector3 _boxHalfExtends = new Vector3(0.35f, 0.31f, 0.35f);
 
-    private int _lastHorizontalInputValue = 1;
+    private Vector3 _normal;
 
+    private int _lastHorizontalInputValue = 1;
     private float _horizontalInput;
 
     private Rigidbody _rb;
@@ -85,6 +87,11 @@ public class RigidBodyMovement : MonoBehaviour
         MoveUpdate();
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        _normal = collision.contacts[0].normal;
+    }
+
     //GettingInputs
     private void InputUpdate()
     {
@@ -97,6 +104,7 @@ public class RigidBodyMovement : MonoBehaviour
         //Checking ground using checkbox
         //We doing that because checkbox working better then raycast with slope surfaces
         bool result = Physics.CheckBox(transform.position + _boxOffset, _boxHalfExtends, Quaternion.identity, _groundLayerMask);
+        Physics.OverlapBox(transform.position + _boxOffset, _boxHalfExtends, Quaternion.identity, _groundLayerMask);
         return result;
     }
 
@@ -132,29 +140,44 @@ public class RigidBodyMovement : MonoBehaviour
     #region Updates
     private void MoveUpdate()
     {
+        if (IsOnGround)
+        {
+            _rb.useGravity = false;
+        }
+        else
+        {
+            _rb.useGravity = true;
+            _normal = Vector3.up;
+        }
+
         //it's condition need if wee want to limit max slope angle
         if (IsCanMoveOnSlopeForward())
         {
             Vector3 direction = Vector3.right * _horizontalInput;
             Vector3 directionAlongSurface;
 
+            direction.Normalize();
+
             //if we on ground we calculating directionAlongSurface depending on ground normal, but if we in air we calculating depending on flat surface normal (Vector3.up)
             //We doing that because method GetGroundNormal gets normal of ground in 100 units under player
             if (IsOnGround)
             {
-                directionAlongSurface = CalculateProjectOnSlope(direction, GetGroundNormal());
+                if (Vector3.Angle(_normal, Vector3.up) < 90)
+                    directionAlongSurface = CalculateProjectOnSlope(direction, GetGroundNormal());
+                else
+                    directionAlongSurface = CalculateProjectOnSlope(direction, GetGroundNormal());
             }
             else
             {
                 directionAlongSurface = CalculateProjectOnSlope(direction, Vector3.up);
             }
 
-            Vector3 velocity = directionAlongSurface * _speed * Time.fixedDeltaTime;
+            Vector3 velocity = directionAlongSurface * (_speed * Time.fixedDeltaTime);
             _rb.MovePosition(transform.position + velocity);
         }
 
         //doing this to prevent bug
-        _rb.velocity = Vector3.up * _rb.velocity.y;
+        _rb.velocity = Vector3.up * Mathf.Max(_rb.velocity.y, -_maxFallSpeed);
     }
 
     private void JumpUpdate()
@@ -182,9 +205,10 @@ public class RigidBodyMovement : MonoBehaviour
             if (JumpBufferTimer <= 0 || _cayoteTimeTimer <= 0)
                 IsCanDoubleJump = false;
 
+            JumpBufferTimer = 0;
+
             //Standart jump on set Y axis velocity
             _rb.velocity = new Vector3(_rb.velocity.x, _jumpForce);
-            JumpBufferTimer = 0;
 
             //Spawn particle on Jump
             Instantiate(_jumpParticleSystem, transform);
