@@ -58,7 +58,7 @@ public class CameraFollow : MonoBehaviour
             float position = transform.position.y + objectViewportPoint.y - 1 + _topBorder;
             float LerpedPosition = Mathf.Lerp(transform.position.y, position, Time.deltaTime * _followSmoothness);
 
-            transform.position = new Vector3(LerpedPosition, transform.position.y, transform.position.z);
+            transform.position = new Vector3(transform.position.x , LerpedPosition, transform.position.z);
         }
         if (_moveRight)
         {
@@ -72,7 +72,7 @@ public class CameraFollow : MonoBehaviour
             float position = transform.position.y + objectViewportPoint.y - _bottomBorder;
             float LerpedPosition = Mathf.Lerp(transform.position.y, position, Time.deltaTime * _followSmoothness);
 
-            transform.position = new Vector3(LerpedPosition, transform.position.y, transform.position.z);
+            transform.position = new Vector3(transform.position.x, LerpedPosition, transform.position.z);
         }
     }
 }

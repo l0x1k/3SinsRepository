@@ -5,16 +5,20 @@ public class CharacterControllerMovement : MonoBehaviour
 {
     public bool IsOnGround => _controller.isGrounded;
 
-    [SerializeField] private float _speed;
-    [SerializeField] private float _rotationSpeed;
+    [SerializeField] private float _speed = 10;
+    [SerializeField] private float _rotationSpeed = 10;
     [Header("Jump")]
     [SerializeField] private bool _useDoubleJump;
-    [SerializeField] private float _jumpForce = 5;
+    [SerializeField] private float _jumpEndEarlyGravityModifier = 1.2f;
+    [SerializeField] private float _jumpForce = 20;
     [SerializeField] private float _cayoteTime = 0.2f;
     [SerializeField] private float _jumpBufferTime = 0.2f;
+    [Header("Apex modifier")]
+    [SerializeField] private float _apexThreshold = 0.5f;
+    [SerializeField] private float _apexBonus = 2;
     [Header("Gravity")]
-    [SerializeField] private float _gravityForce;
-    [SerializeField] private float _maxFallVelocity;
+    [SerializeField] private float _gravityForce = 50;
+    [SerializeField] private float _maxFallVelocity = 20;
     [Header("Ground check")]
     [SerializeField] private LayerMask _groundLayerMask;
     [SerializeField] private Vector3 _boxOffset = new Vector3(0, -0.7f, 0);
@@ -24,7 +28,7 @@ public class CharacterControllerMovement : MonoBehaviour
 
     public bool IsCanJump
     {
-        get { return (CayoteTimeTimer > 0 && JumpBufferTimer > 0) || _isCanJump; }
+        get { return (CayoteTimeTimer > 0 && JumpBufferTimer > 0) || _isCanJump && JumpBufferTimer > 0; }
         set { _isCanJump = value; }
     }
 
@@ -60,6 +64,8 @@ public class CharacterControllerMovement : MonoBehaviour
     }
     #endregion 
 
+    private bool _isJumpEndedEarly;
+
     private float _horizontalVelocity;
     private float _verticalVelocity;
 
@@ -84,8 +90,10 @@ public class CharacterControllerMovement : MonoBehaviour
     {
         MoveUpdate();
         GravityUpdate();
+        ApexBoostUpdate();
 
         CayoteTimeTimer -= Time.fixedDeltaTime;
+
         _controller.Move((_horizontalVelocity * Vector3.right + _verticalVelocity * Vector3.up) * Time.fixedDeltaTime);
     }
 
@@ -114,7 +122,11 @@ public class CharacterControllerMovement : MonoBehaviour
             IsCanDoubleJump = true;
         }
 
-        //jump buffer
+        //if (_verticalVelocity < 0)
+        //{
+        //    _isJumpEndedEarly = false;
+        //}
+
         if (Input.GetKeyDown(KeyCode.Space))
         {
             JumpBufferTimer = _jumpBufferTime;
@@ -124,21 +136,25 @@ public class CharacterControllerMovement : MonoBehaviour
             JumpBufferTimer -= Time.deltaTime;
         }
 
-        //if we press jump key and if we was on groun or if we can double jump
         if (IsCanJump || IsCanDoubleJump)
         {
-            //if we jumping not from ground we set is can double jump to false
             if (IsCanJump == false)
                 IsCanDoubleJump = false;
 
             JumpBufferTimer = 0;
 
-            //Standart jump on set Y axis velocity
             _verticalVelocity = _jumpForce;
         }
-        //set to zero cayote timer
-        if (Input.GetKeyUp(KeyCode.Space) && _verticalVelocity > 0)
+
+        if (Input.GetKey(KeyCode.Space))
         {
+            _isJumpEndedEarly = false;
+        }
+
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            _isJumpEndedEarly = true;
+
             if (IsCanDoubleJump == true)
                 CayoteTimeTimer = 0;
         }
@@ -147,7 +163,13 @@ public class CharacterControllerMovement : MonoBehaviour
     private void GravityUpdate()
     {
         if (IsOnGround == false)
-            _verticalVelocity = Mathf.Max(_verticalVelocity - _gravityForce * Time.fixedDeltaTime, -_maxFallVelocity);
+        {
+            float modifiedGravityForce = _isJumpEndedEarly && _verticalVelocity > 0 ? _gravityForce * _jumpEndEarlyGravityModifier : _gravityForce;
+
+            float velocity = Mathf.Max(_verticalVelocity - modifiedGravityForce * Time.fixedDeltaTime, -_maxFallVelocity);
+
+            _verticalVelocity = velocity;
+        }
     }
 
     private void RotationUpdate()
@@ -160,6 +182,16 @@ public class CharacterControllerMovement : MonoBehaviour
         Quaternion neededRotation = Quaternion.LookRotation(Vector3.forward * _lastHorizontalInputValue, Vector3.up);
 
         transform.rotation = Quaternion.Lerp(transform.rotation, neededRotation, Time.deltaTime * _rotationSpeed);
+    }
+
+    private void ApexBoostUpdate()
+    {
+        if (IsOnGround == false && _horizontalInput != 0)
+        {
+            float apexFactor = Mathf.InverseLerp(_apexThreshold, 0, Mathf.Abs(_verticalVelocity));
+            float apexBoost = Mathf.Sign(_horizontalInput) * _apexBonus * apexFactor;
+            _horizontalVelocity += apexBoost * Time.fixedDeltaTime;
+        }
     }
 
     private void OnDrawGizmos()
