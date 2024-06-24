@@ -1,4 +1,5 @@
 using UnityEngine;
+using Cinemachine;
 
 [RequireComponent(typeof(CharacterController))]
 public class CharacterControllerMovement : MonoBehaviour
@@ -74,9 +75,18 @@ public class CharacterControllerMovement : MonoBehaviour
 
     private CharacterController _controller;
 
+    public CinemachineVirtualCamera _cinemachineVirtualCamera;
+    public float shakeIntensity = 1f;
+    public float shakeDuration = 0.5f;
+    private float shakeTimer;
+    private CinemachineBasicMultiChannelPerlin noise;
+
+
     private void Awake()
     {
         _controller = GetComponent<CharacterController>();
+        noise = _cinemachineVirtualCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
+
     }
 
     private void Update()
@@ -114,12 +124,21 @@ public class CharacterControllerMovement : MonoBehaviour
         _horizontalVelocity = _horizontalInput * _speed;
     }
 
+
     private void JumpUpdate()
     {
         if (IsOnGround)
         {
             CayoteTimeTimer = _cayoteTime;
             IsCanDoubleJump = true;
+
+            if (shakeTimer > 0)
+            {
+                shakeTimer -= Time.deltaTime;
+                noise.m_AmplitudeGain = Mathf.Lerp(shakeIntensity, 0.2f, 1f - (shakeTimer / shakeDuration));
+            }
+
+
         }
 
         //if (_verticalVelocity < 0)
@@ -169,6 +188,8 @@ public class CharacterControllerMovement : MonoBehaviour
             float velocity = Mathf.Max(_verticalVelocity - modifiedGravityForce * Time.fixedDeltaTime, -_maxFallVelocity);
 
             _verticalVelocity = velocity;
+
+            ShakeCamera();
         }
     }
 
@@ -192,6 +213,13 @@ public class CharacterControllerMovement : MonoBehaviour
             float apexBoost = Mathf.Sign(_horizontalInput) * _apexBonus * apexFactor;
             _horizontalVelocity += apexBoost * Time.fixedDeltaTime;
         }
+    }
+
+    public void ShakeCamera()
+    {
+        shakeTimer = shakeDuration;
+
+        noise.m_AmplitudeGain = Mathf.Lerp(0f, shakeIntensity, 1f - (shakeTimer / shakeDuration));
     }
 
     private void OnDrawGizmos()
