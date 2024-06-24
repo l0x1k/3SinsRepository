@@ -1,5 +1,6 @@
 using UnityEngine;
 using Cinemachine;
+using System.Collections;
 
 [RequireComponent(typeof(CharacterController))]
 public class CharacterControllerMovement : MonoBehaviour
@@ -75,17 +76,26 @@ public class CharacterControllerMovement : MonoBehaviour
 
     private CharacterController _controller;
 
+    [Header("Camera Shaking")]
+
     public CinemachineVirtualCamera _cinemachineVirtualCamera;
     public float shakeIntensity = 1f;
     public float shakeDuration = 0.5f;
     private float shakeTimer;
     private CinemachineBasicMultiChannelPerlin noise;
 
+    [Header("Landing Particles")]
+    public GameObject LandingParticles;
+    [SerializeField] private float _lifeTime = 3;
+    public GameObject CharTransform;
+
+
 
     private void Awake()
     {
         _controller = GetComponent<CharacterController>();
         noise = _cinemachineVirtualCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
+        
 
     }
 
@@ -141,6 +151,10 @@ public class CharacterControllerMovement : MonoBehaviour
 
         }
 
+        if (Input.GetKeyDown(KeyCode.Space)&& IsOnGround)
+        {
+            Landing();
+        }
         //if (_verticalVelocity < 0)
         //{
         //    _isJumpEndedEarly = false;
@@ -168,6 +182,7 @@ public class CharacterControllerMovement : MonoBehaviour
         if (Input.GetKey(KeyCode.Space))
         {
             _isJumpEndedEarly = false;
+            
         }
 
         if (Input.GetKeyUp(KeyCode.Space))
@@ -221,6 +236,16 @@ public class CharacterControllerMovement : MonoBehaviour
 
         noise.m_AmplitudeGain = Mathf.Lerp(0f, shakeIntensity, 1f - (shakeTimer / shakeDuration));
     }
+
+    private void Landing()
+    {
+        var burst = Instantiate(LandingParticles);
+        burst.transform.position = CharTransform.transform.position;
+         //Invoke("", _lifeTime);
+        
+
+    }
+
 
     private void OnDrawGizmos()
     {
