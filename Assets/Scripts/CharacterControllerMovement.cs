@@ -185,14 +185,15 @@ public class CharacterControllerMovement : MonoBehaviour
 
         if (IsCanJump || IsCanDoubleJump)
         {
+            if (IsOnGround)
+                Landing();
+
             if (IsCanJump == false)
                 IsCanDoubleJump = false;
 
             JumpBufferTimer = 0;
 
             _verticalVelocity = _jumpForce;
-
-            Landing();
         }
 
         if (Input.GetKey(KeyCode.Space))

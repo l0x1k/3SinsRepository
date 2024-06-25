@@ -1416,23 +1416,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de68ce7d5c0651b4fbe7d49fccbdb0ce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <IsOnGround>k__BackingField: 0
-  _speed: 15
+  _speed: 10
   _rotationSpeed: 10
-  _useDoubleJump: 0
+  _useDoubleJump: 1
   _jumpEndEarlyGravityModifier: 2
-  _jumpForce: 30
+  _jumpForce: 20
   _cayoteTime: 0.2
   _jumpBufferTime: 0.2
   _apexThreshold: 7
   _apexBonus: 200
-  _gravityForce: 50
+  _gravityForce: 35
   _maxFallVelocity: 20
   _groundLayerMask:
     serializedVersion: 2
     m_Bits: 8
-  _boxOffset: {x: 0, y: -0.77, z: 0}
-  _boxHalfExtends: {x: 0.35, y: 0.31, z: 0.35}
+  _boxOffset: {x: 0, y: -0.777, z: 0}
+  _boxHalfExtends: {x: 0.36, y: 0.31, z: 0.36}
   _cinemachineVirtualCamera: {fileID: 1026536362}
   shakeIntensity: 6
   shakeDuration: 0.5
