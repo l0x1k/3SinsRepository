@@ -134,7 +134,6 @@ public class CharacterControllerMovement : MonoBehaviour
         _horizontalVelocity = _horizontalInput * _speed;
     }
 
-
     private void JumpUpdate()
     {
         if (IsOnGround)
@@ -146,6 +145,11 @@ public class CharacterControllerMovement : MonoBehaviour
             {
                 shakeTimer -= Time.deltaTime;
                 noise.m_AmplitudeGain = Mathf.Lerp(shakeIntensity, 0.2f, 1f - (shakeTimer / shakeDuration));
+                
+            }
+            if (shakeTimer > 0.35f && shakeTimer < 0.4f)
+            {
+                Landing();
             }
 
 
@@ -155,6 +159,8 @@ public class CharacterControllerMovement : MonoBehaviour
         {
             Landing();
         }
+
+       
         //if (_verticalVelocity < 0)
         //{
         //    _isJumpEndedEarly = false;
@@ -205,6 +211,7 @@ public class CharacterControllerMovement : MonoBehaviour
             _verticalVelocity = velocity;
 
             ShakeCamera();
+            
         }
     }
 
@@ -235,14 +242,15 @@ public class CharacterControllerMovement : MonoBehaviour
         shakeTimer = shakeDuration;
 
         noise.m_AmplitudeGain = Mathf.Lerp(0f, shakeIntensity, 1f - (shakeTimer / shakeDuration));
+
+        
     }
 
     private void Landing()
     {
         var burst = Instantiate(LandingParticles);
         burst.transform.position = CharTransform.transform.position;
-         //Invoke("", _lifeTime);
-        
+        Destroy(burst,_lifeTime);
 
     }
 

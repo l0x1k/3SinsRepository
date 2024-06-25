@@ -1480,7 +1480,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _speed: 15
   _rotationSpeed: 10
-  _useDoubleJump: 1
+  _useDoubleJump: 0
   _jumpEndEarlyGravityModifier: 2
   _jumpForce: 30
   _cayoteTime: 0.2
@@ -1498,7 +1498,7 @@ MonoBehaviour:
   shakeIntensity: 6
   shakeDuration: 0.5
   LandingParticles: {fileID: 1299519269}
-  _lifeTime: 10
+  _lifeTime: 1
   CharTransform: {fileID: 956636608}
 --- !u!143 &1797189654
 CharacterController:
