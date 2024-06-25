@@ -1479,6 +1479,12 @@ MonoBehaviour:
     m_Bits: 8
   _boxOffset: {x: 0, y: -0.7, z: 0}
   _boxHalfExtends: {x: 0.35, y: 0.31, z: 0.35}
+  _cinemachineVirtualCamera: {fileID: 0}
+  shakeIntensity: 1
+  shakeDuration: 0.5
+  LandingParticles: {fileID: 0}
+  _lifeTime: 3
+  CharTransform: {fileID: 0}
 --- !u!143 &1910557292
 CharacterController:
   m_ObjectHideFlags: 0

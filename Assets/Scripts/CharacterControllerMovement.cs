@@ -1,11 +1,14 @@
 using UnityEngine;
 using Cinemachine;
 using System.Collections;
+using UnityEngine.Events;
+using System.Runtime.Serialization;
 
 [RequireComponent(typeof(CharacterController))]
 public class CharacterControllerMovement : MonoBehaviour
 {
-    public bool IsOnGround => _controller.isGrounded;
+    public static UnityEvent OnLand = new UnityEvent();
+    public bool IsOnGround { get; private set; }
 
     [SerializeField] private float _speed = 10;
     [SerializeField] private float _rotationSpeed = 10;
@@ -95,12 +98,19 @@ public class CharacterControllerMovement : MonoBehaviour
     {
         _controller = GetComponent<CharacterController>();
         noise = _cinemachineVirtualCamera.GetCinemachineComponent<CinemachineBasicMultiChannelPerlin>();
-        
 
+        IsOnGround = IsGrounded();
+    }
+
+    private void OnEnable()
+    {
+        OnLand.AddListener(() => Landing());
     }
 
     private void Update()
     {
+        IsOnGround = IsGrounded();
+
         Inputs();
         JumpUpdate();
         RotationUpdate();
@@ -126,6 +136,12 @@ public class CharacterControllerMovement : MonoBehaviour
     {
         bool result = Physics.CheckBox(transform.position + _boxOffset, _boxHalfExtends, Quaternion.identity, _groundLayerMask);
         Physics.OverlapBox(transform.position + _boxOffset, _boxHalfExtends, Quaternion.identity, _groundLayerMask);
+
+        if (IsOnGround == false && result)
+        {
+            OnLand?.Invoke();
+        }
+
         return result;
     }
 
@@ -147,23 +163,15 @@ public class CharacterControllerMovement : MonoBehaviour
                 noise.m_AmplitudeGain = Mathf.Lerp(shakeIntensity, 0.2f, 1f - (shakeTimer / shakeDuration));
                 
             }
-            if (shakeTimer > 0.35f && shakeTimer < 0.4f)
-            {
-                Landing();
-            }
-
-
+            //if (shakeTimer > 0.35f && shakeTimer < 0.4f)
+            //{
+            //    Landing();
+            //}
         }
 
-        if (Input.GetKeyDown(KeyCode.Space)&& IsOnGround)
-        {
-            Landing();
-        }
-
-       
-        //if (_verticalVelocity < 0)
+        //if (Input.GetKeyDown(KeyCode.Space) && IsOnGround)
         //{
-        //    _isJumpEndedEarly = false;
+        //    Landing();
         //}
 
         if (Input.GetKeyDown(KeyCode.Space))
@@ -183,6 +191,8 @@ public class CharacterControllerMovement : MonoBehaviour
             JumpBufferTimer = 0;
 
             _verticalVelocity = _jumpForce;
+
+            Landing();
         }
 
         if (Input.GetKey(KeyCode.Space))
@@ -211,7 +221,6 @@ public class CharacterControllerMovement : MonoBehaviour
             _verticalVelocity = velocity;
 
             ShakeCamera();
-            
         }
     }
 
@@ -252,6 +261,11 @@ public class CharacterControllerMovement : MonoBehaviour
         burst.transform.position = CharTransform.transform.position;
         Destroy(burst,_lifeTime);
 
+    }
+
+    private void OnDisable()
+    {
+        OnLand.RemoveListener(() => Landing());
     }
 
 
