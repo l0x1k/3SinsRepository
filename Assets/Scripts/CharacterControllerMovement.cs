@@ -24,6 +24,7 @@ public class CharacterControllerMovement : MonoBehaviour
     [Header("Gravity")]
     [SerializeField] private float _gravityForce = 50;
     [SerializeField] private float _maxFallVelocity = 20;
+    [SerializeField] private float _minFallVelocity = 5;
     [Header("Ground check")]
     [SerializeField] private LayerMask _groundLayerMask;
     [SerializeField] private Vector3 _boxOffset = new Vector3(0, -0.7f, 0);
@@ -222,6 +223,10 @@ public class CharacterControllerMovement : MonoBehaviour
             _verticalVelocity = velocity;
 
             ShakeCamera();
+        }
+        else if (_verticalVelocity < 0)
+        {
+            _verticalVelocity = -_minFallVelocity;
         }
     }
 
